@@ -91,7 +91,7 @@ module.exports = {
      * output:出口,打包后的文件存放位置
      */
     output: {
-        filename: '[name].js', //要分离JS,这里是开发者的JS
+        filename: '[hash].[name].js', //要分离JS,这里是开发者的JS
         path: path.resolve(__dirname, './dist') //路径,没什么可说的,这里用到了path,所以要引入
     },
     /**
@@ -145,7 +145,8 @@ module.exports = {
         new CleanWebpackPlugin(['dist']), //清除文件包,生产环境
 
         new ExtractTextPlugin({ //抽离CSS
-            filename: 'assets/css/[name][hash].css',
+            filename: '[hash].[name].css',//解决font-awesome
+            // filename: 'assets/css/[name].css',
         }),
         new OptimizeCssAssetsPlugin({ //压缩抽离的CSS
             cssProcessor: require('cssnano'),
@@ -156,18 +157,30 @@ module.exports = {
             },
             canPrint: true
         }),
-        // new CopyWebpackPlugin([{ //复制图片静态资源,貌似没有必要
-        //     from: 'assets/images',
-        //     to: 'assets/images'
-        // }]),
-        // new CopyWebpackPlugin([{ //复制字体静态资源,貌似没必要,字体会被转化为base64
+        new CopyWebpackPlugin([{ //复制图片静态资源,用于切换
+            from: 'assets/images',
+            to: 'assets/images'
+        }]),
+        // 复制upload
+        new CopyWebpackPlugin([{ //复制upload,用于外部引用
+            from: 'assets/upload',
+            to: 'assets/upload'
+        }]),
+        // new CopyWebpackPlugin([{ //复制字体静态资源,上面的加载器处理过了
         //     from: 'assets/fonts',
         //     to: 'assets/fonts'
         // }]),
+        new CopyWebpackPlugin([{ //复制微信提示文件
+            from: 'src/MP_verify_j9at2g8yYn9bUXO2.txt',
+        }]),
+        new CopyWebpackPlugin([{ //复制网站logo
+            from: 'src/favicon.ico',
+        }]),
+
         //图片还是自己压缩吧!,这个插件的压缩率不是很高,还影响打包时间
-        new ImageminPlugin({ //图片压缩
-            test: /\.(jpe?g|png|gif|svg)$/i
-        }),
+        // new ImageminPlugin({ //图片压缩
+        //     test: /\.(jpe?g|png|gif|svg)$/i
+        // }),
 
         new HtmlWebpackPlugin({
             title: 'mywebpack', //复制后的html的title
@@ -188,6 +201,11 @@ module.exports = {
                 removeAttributeQuotes: true //去除属性引用
             }
         }),
+        new webpack.DefinePlugin({//vue的开发工具
+            "process.env":{
+                NODE_ENV: '"development"'
+            }
+        })
     ],
     optimization: {//分离正则匹配到的
         splitChunks: {
@@ -200,5 +218,9 @@ module.exports = {
             }
         }
     },
-    mode: 'production' //指定模式,不然会有警告
+    mode: 'production', //指定模式,不然会有警告
+    performance: { //隐藏文件体积过大时候的警告
+        hints: false
+    }
 }
+// browser-sync start --server --files " **/*.html, **/*.css, **/*.js, **/*.less"
